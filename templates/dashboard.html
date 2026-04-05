@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — PlacePrep{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Welcome Banner ── */
+.welcome-banner {
+  background: var(--ink);
+  border-radius: var(--radius);
+  padding: 36px 40px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.welcome-banner::after {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: var(--red);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  opacity: 0.1;
+}
+
+.welcome-content { position: relative; z-index: 1; }
+
+.welcome-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.welcome-label::before {
+  content: '';
+  display: inline-block;
+  width: 16px; height: 1px;
+  background: var(--red);
+}
+
+.welcome-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.welcome-title em { font-style: italic; color: #ffaaaa; }
+
+.welcome-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.42);
+}
+
+.welcome-actions { display: flex; gap: 10px; position: relative; z-index: 1; flex-shrink: 0; }
+
+.wbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.18s;
+  text-decoration: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.wbtn-primary { background: var(--red); color: white; border-color: var(--red); }
+.wbtn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.wbtn-outline { background: transparent; color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.2); }
+.wbtn-outline:hover { background: rgba(255,255,255,0.08); color: white; }
+
+/* ── Dashboard Grid ── */
+.dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+/* ── Recent Tests ── */
+.test-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.test-row:last-child { border-bottom: none; }
+
+.test-company {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.test-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+
+.score-chip {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ink);
+  letter-spacing: -1px;
+}
+.score-chip.good { color: var(--teal); }
+.score-chip.avg  { color: var(--gold); }
+.score-chip.low  { color: var(--red); }
+
+/* ── Section Bars ── */
+.section-row { margin-bottom: 16px; }
+.section-row-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  font-size: 13px;
+}
+.section-name { font-weight: 600; text-transform: capitalize; color: var(--ink-soft); }
+.section-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* ── S/W Cards ── */
+.sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.sw-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.sw-card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.sw-card-title.teal { color: var(--teal); }
+.sw-card-title.red  { color: var(--red); }
+
+.sw-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 2px;
+  text-transform: capitalize;
+}
+.sw-pill.teal { background: var(--teal-light); color: var(--teal); }
+.sw-pill.red  { background: var(--red-light); color: var(--red); }
+
+.company-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--paper-warm);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--ink-mid);
+  margin: 3px;
+}
+
+@media(max-width:1100px) { .dash-grid { grid-template-columns: 1fr; } }
+@media(max-width:700px) {
+  .welcome-banner { flex-direction: column; gap: 20px; align-items: flex-start; }
+  .sw-grid { grid-template-columns: 1fr; }
+  .test-row { grid-template-columns: 1fr auto; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+
+  <!-- WELCOME -->
+  <div class="welcome-banner">
+    <div class="welcome-content">
+      <div class="welcome-label">Good day</div>
+      <div class="welcome-title">Hello, <em id="user-name">Student</em></div>
+      <div class="welcome-sub">Track your progress and keep practising — placements are won by consistency.</div>
+    </div>
+    <div class="welcome-actions">
+      <a href="/mock-test" class="wbtn wbtn-primary">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+        </svg>
+        Start Test
+      </a>
+      <a href="/coding" class="wbtn wbtn-outline">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        Coding Lab
+      </a>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row fade-up delay-1">
+    <div class="stat-card">
+      <div class="stat-label">Tests Taken</div>
+      <div class="stat-value red" id="stat-tests">0</div>
+      <div class="stat-change">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Score</div>
+      <div class="stat-value" id="stat-avg">0%</div>
+      <div class="stat-change">Across tests</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best Score</div>
+      <div class="stat-value teal" id="stat-best">0%</div>
+      <div class="stat-change">Personal best</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Improvement</div>
+      <div class="stat-value slate" id="stat-improve">—</div>
+      <div class="stat-change">vs. earlier</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="dash-grid">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Recent Tests -->
+      <div class="card fade-up delay-2">
+        <div class="section-header">
+          <div class="section-title">Recent Tests</div>
+          <a href="/performance" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        <div id="recent-tests-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                <rect x="9" y="3" width="6" height="4" rx="1"/>
+              </svg>
+            </div>
+            <h3>No tests yet</h3>
+            <p>Take your first mock test to see results here.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strength & Weakness -->
+      <div class="card fade-up delay-3">
+        <div class="section-title" style="margin-bottom:16px;">Strength &amp; Weakness Analysis</div>
+        <div class="sw-grid">
+          <div class="sw-card">
+            <div class="sw-card-title teal">Strengths</div>
+            <div id="strength-list"><span class="text-xs text-muted">Complete tests to see analysis</span></div>
+          </div>
+          <div class="sw-card">
+            <div class="sw-card-title red">Weaknesses</div>
+            <div id="weakness-list"><span class="text-xs text-muted">Complete tests to see analysis</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Section Performance -->
+      <div class="card fade-up delay-2">
+        <div class="section-title" style="margin-bottom:18px;">Section Performance</div>
+        <div id="section-bars">
+          <div style="font-size:13px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace;text-align:center;padding:24px 0">
+            No data yet
+          </div>
+        </div>
+      </div>
+
+      <!-- Companies -->
+      <div class="card fade-up delay-3">
+        <div class="section-title" style="margin-bottom:14px;">Companies Practised</div>
+        <div id="companies-list">
+          <span class="text-xs text-muted">None yet</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadDashboard() {
+  const me = await fetch('/api/me').then(r=>r.json());
+  if (me.error) { window.location.href='/'; return; }
+  document.getElementById('user-name').textContent = me.name || 'Student';
+
+  const data = await fetch('/api/dashboard').then(r=>r.json());
+  if (data.error) return;
+
+  const { tests, topic_stats, strengths, weaknesses } = data;
+
+  document.getElementById('stat-tests').textContent = tests.length;
+
+  if (tests.length > 0) {
+    const avg  = tests.reduce((s,t)=>s+t.percentage,0)/tests.length;
+    const best = Math.max(...tests.map(t=>t.percentage));
+    document.getElementById('stat-avg').textContent  = avg.toFixed(1)+'%';
+    document.getElementById('stat-best').textContent = best.toFixed(1)+'%';
+    if (tests.length >= 4) {
+      const recent = tests.slice(0,2).reduce((s,t)=>s+t.percentage,0)/2;
+      const old    = tests.slice(-2).reduce((s,t)=>s+t.percentage,0)/2;
+      const diff   = (recent-old).toFixed(1);
+      const el = document.getElementById('stat-improve');
+      el.textContent = (diff>0?'+':'')+diff+'%';
+      el.className = 'stat-value '+(diff>0?'teal':diff<0?'red':'');
+    }
+  }
+
+  // Recent tests
+  if (tests.length > 0) {
+    document.getElementById('recent-tests-list').innerHTML = tests.slice(0,5).map(t => {
+      const pct = t.percentage;
+      const cls = pct>=70?'good':pct>=50?'avg':'low';
+      const diff = t.difficulty;
+      const badgeCls = diff==='easy'?'badge-green':diff==='hard'?'badge-red':'badge-gold';
+      return `
+        <div class="test-row">
+          <div>
+            <div class="test-company">${t.company}</div>
+            <div class="test-date">${new Date(t.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+          </div>
+          <span class="badge ${badgeCls}">${diff}</span>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint)">${t.score}/${t.total}</div>
+          <div class="score-chip ${cls}">${Math.round(pct)}%</div>
+        </div>`;
+    }).join('');
+  }
+
+  // Section bars
+  const topics = Object.keys(topic_stats);
+  if (topics.length > 0) {
+    document.getElementById('section-bars').innerHTML = topics.map(topic => {
+      const s = topic_stats[topic];
+      const pct = s.total ? Math.round(s.correct/s.total*100) : 0;
+      const fillCls = pct>=70?'teal':pct<50?'red':'';
+      return `
+        <div class="section-row">
+          <div class="section-row-header">
+            <span class="section-name">${topic}</span>
+            <span class="section-score">${s.correct}/${s.total} · ${pct}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill ${fillCls}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // SW
+  if (strengths.length > 0) {
+    document.getElementById('strength-list').innerHTML = strengths.map(s=>`<span class="sw-pill teal">${s}</span>`).join('');
+  }
+  if (weaknesses.length > 0) {
+    document.getElementById('weakness-list').innerHTML = weaknesses.map(w=>`<span class="sw-pill red">${w}</span>`).join('');
+  }
+
+  // Companies
+  const companies = [...new Set(tests.map(t=>t.company))];
+  if (companies.length > 0) {
+    document.getElementById('companies-list').innerHTML = companies.map(c=>`<span class="company-chip">${c}</span>`).join('');
+  }
+}
+loadDashboard();
+</script>
+{% endblock %}

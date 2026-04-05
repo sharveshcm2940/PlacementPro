@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% block title %}Performance - PlacePrep{% endblock %}
+{% block breadcrumb %}Performance{% endblock %}
+{% block extra_css %}
+<style>
+.perf-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+
+/* Mini chart */
+.chart-wrap { position: relative; height: 160px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 100%; }
+.chart-bar-group { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+.chart-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+  transition: height 0.5s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  cursor: pointer;
+}
+.chart-bar:hover::after {
+  content: attr(data-pct);
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text);
+  white-space: nowrap;
+  z-index: 10;
+}
+.chart-bar-label { font-size: 9px; font-family: 'DM Mono', monospace; color: var(--text-dim); text-align: center; }
+
+/* History table */
+.history-filter { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn.active { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+
+/* Topic radar style breakdown */
+.topic-breakdown { display: flex; flex-direction: column; gap: 12px; }
+.topic-row { display: flex; align-items: center; gap: 12px; }
+.topic-name { font-size: 13px; font-weight: 600; text-transform: capitalize; min-width: 80px; }
+.topic-progress { flex: 1; }
+.topic-pct { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-muted); min-width: 40px; text-align: right; }
+
+/* Timeline dots */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-item:last-child { border-bottom: none; }
+.timeline-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.timeline-content { flex: 1; }
+.timeline-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.timeline-meta { font-size: 12px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
+.timeline-score { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+
+@media (max-width: 1100px) { .perf-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header fade-up">
+  <div class="page-title">Performance <span>Dashboard</span></div>
+  <div class="page-subtitle">Track your progress and identify areas to improve.</div>
+</div>
+
+<div class="stats-row fade-up delay-1">
+  <div class="stat-card">
+    <div class="stat-label">Total Tests</div>
+    <div class="stat-value amber" id="p-total">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg Score</div>
+    <div class="stat-value" id="p-avg">0%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Best Score</div>
+    <div class="stat-value green" id="p-best">0%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Improvement</div>
+    <div class="stat-value blue" id="p-improve">+0%</div>
+  </div>
+</div>
+
+<div class="perf-grid fade-up delay-2">
+
+  <!-- LEFT -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Score History Chart -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Score History</div>
+        <span class="text-muted text-xs mono">Last 10 tests</span>
+      </div>
+      <div class="chart-wrap" id="score-chart">
+        <div style="text-align:center;padding:40px 0;font-size:13px;color:var(--text-dim)">No test data yet</div>
+      </div>
+    </div>
+
+    <!-- Test History -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Test History</div>
+        <div class="history-filter">
+          <button class="filter-btn active" onclick="filterHistory('all',this)">All</button>
+          <button class="filter-btn" onclick="filterHistory('TCS',this)">TCS</button>
+          <button class="filter-btn" onclick="filterHistory('Amazon',this)">Amazon</button>
+          <button class="filter-btn" onclick="filterHistory('Infosys',this)">Infosys</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="history-table">
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Date</th>
+              <th>Difficulty</th>
+              <th>Score</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Topic Breakdown -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:18px;">Topic Breakdown</div>
+      <div class="topic-breakdown" id="topic-breakdown">
+        <div style="font-size:13px;color:var(--text-dim)">No data yet</div>
+      </div>
+    </div>
+
+    <!-- Recent Timeline -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px;">Activity Timeline</div>
+      <div class="timeline" id="activity-timeline">
+        <div style="font-size:13px;color:var(--text-dim)">No activity yet</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+let allTests = [];
+
+async function loadPerformance() {
+  const data = await fetch('/api/dashboard').then(r => r.json());
+  if (data.error) return;
+
+  const { tests, topic_stats } = data;
+  allTests = tests;
+
+  // Stats
+  document.getElementById('p-total').textContent = tests.length;
+  if (tests.length > 0) {
+    const avg = tests.reduce((s,t) => s + t.percentage, 0) / tests.length;
+    const best = Math.max(...tests.map(t => t.percentage));
+    document.getElementById('p-avg').textContent = avg.toFixed(1) + '%';
+    document.getElementById('p-best').textContent = best.toFixed(1) + '%';
+
+    if (tests.length >= 2) {
+      const recent = tests.slice(0, 3).reduce((s,t) => s+t.percentage, 0) / 3;
+      const older = tests.slice(-3).reduce((s,t) => s+t.percentage, 0) / 3;
+      const diff = (recent - older).toFixed(1);
+      const el = document.getElementById('p-improve');
+      el.textContent = (diff > 0 ? '+' : '') + diff + '%';
+      if (diff > 0) el.classList.add('text-green');
+      else if (diff < 0) el.classList.add('text-red');
+    }
+  }
+
+  renderChart(tests);
+  renderHistory(tests);
+  renderTopicBreakdown(topic_stats);
+  renderTimeline(tests);
+}
+
+function renderChart(tests) {
+  if (!tests.length) return;
+  const recent = [...tests].reverse().slice(-10);
+  const max = 100;
+  const colors = recent.map(t => t.percentage >= 70 ? 'var(--green)' : t.percentage >= 50 ? 'var(--amber)' : 'var(--red)');
+
+  document.getElementById('score-chart').innerHTML = `
+    <div class="chart-bars">
+      ${recent.map((t,i) => `
+        <div class="chart-bar-group">
+          <div class="chart-bar" style="height:${(t.percentage/max)*140}px;background:${colors[i]};opacity:0.8"
+            data-pct="${t.percentage.toFixed(1)}% - ${t.company}"></div>
+          <div class="chart-bar-label">${t.company.substring(0,3)}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderHistory(tests) {
+  document.getElementById('history-tbody').innerHTML = tests.map(t => {
+    const pct = t.percentage;
+    const status = pct >= 70 ? 'badge-green' : pct >= 50 ? 'badge-amber' : 'badge-red';
+    const statusText = pct >= 70 ? 'Pass' : pct >= 50 ? 'Average' : 'Fail';
+    const time = t.time_taken ? `${Math.floor(t.time_taken/60)}m ${t.time_taken%60}s` : '—';
+    return `
+      <tr>
+        <td style="font-weight:600;color:var(--text)">${t.company}</td>
+        <td>${new Date(t.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</td>
+        <td><span class="badge badge-gray">${t.difficulty}</span></td>
+        <td style="font-family:'DM Mono',monospace;font-size:13px">${t.score}/${t.total} <span style="color:var(--text-dim)">(${pct.toFixed(1)}%)</span></td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-dim)">${time}</td>
+        <td><span class="badge ${status}">${statusText}</span></td>
+      </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:30px 0">No tests taken yet</td></tr>';
+}
+
+function filterHistory(company, el) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const filtered = company === 'all' ? allTests : allTests.filter(t => t.company === company);
+  renderHistory(filtered);
+}
+
+function renderTopicBreakdown(topic_stats) {
+  const topics = Object.entries(topic_stats);
+  if (!topics.length) return;
+
+  document.getElementById('topic-breakdown').innerHTML = topics.map(([topic, s]) => {
+    const pct = s.total ? Math.round(s.correct/s.total*100) : 0;
+    const colorClass = pct >= 70 ? 'green' : pct < 50 ? 'red' : '';
+    return `
+      <div class="topic-row">
+        <div class="topic-name">${topic}</div>
+        <div class="topic-progress">
+          <div class="progress-bar">
+            <div class="progress-fill ${colorClass}" style="width:${pct}%"></div>
+          </div>
+        </div>
+        <div class="topic-pct">${pct}%</div>
+      </div>`;
+  }).join('');
+}
+
+function renderTimeline(tests) {
+  if (!tests.length) return;
+  document.getElementById('activity-timeline').innerHTML = tests.slice(0,6).map(t => {
+    const pct = t.percentage;
+    const dotColor = pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
+    return `
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:${dotColor}"></div>
+        <div class="timeline-content">
+          <div class="timeline-title">${t.company} Mock Test</div>
+          <div class="timeline-meta">${new Date(t.created_at).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})} · ${t.difficulty}</div>
+        </div>
+        <div class="timeline-score" style="color:${dotColor}">${Math.round(pct)}%</div>
+      </div>`;
+  }).join('');
+}
+
+loadPerformance();
+</script>
+{% endblock %}

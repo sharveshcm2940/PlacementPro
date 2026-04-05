@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Notifications - PlacePrep{% endblock %}
+{% block breadcrumb %}Notifications{% endblock %}
+{% block extra_css %}
+<style>
+.notif-list { display: flex; flex-direction: column; gap: 10px; max-width: 700px; }
+.notif-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: all 0.15s;
+}
+.notif-card.unread { border-left: 3px solid var(--amber); }
+.notif-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--amber-dim);
+  display: grid;
+  place-items: center;
+  color: var(--amber);
+  flex-shrink: 0;
+}
+.notif-icon.read { background: var(--surface); color: var(--text-dim); }
+.notif-message { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 4px; }
+.notif-time { font-size: 11px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header fade-up">
+  <div class="page-title"><span>Notifications</span></div>
+  <div class="page-subtitle">Your activity updates and reminders.</div>
+</div>
+<div class="notif-list fade-up delay-1" id="notif-list">
+  <div style="font-size:13px;color:var(--text-dim)">Loading...</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function loadNotifs() {
+  const data = await fetch('/api/notifications').then(r=>r.json());
+  const list = data.notifications || [];
+  if (!list.length) {
+    document.getElementById('notif-list').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </div>
+        <h3>No notifications</h3>
+        <p>You're all caught up.</p>
+      </div>`;
+    return;
+  }
+  document.getElementById('notif-list').innerHTML = list.map(n => `
+    <div class="notif-card ${!n.read?'unread':''}">
+      <div class="notif-icon ${n.read?'read':''}">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+      </div>
+      <div>
+        <div class="notif-message">${n.message}</div>
+        <div class="notif-time">${new Date(n.created_at).toLocaleString('en-IN')}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('notif-badge').style.display = 'none';
+}
+loadNotifs();
+</script>
+{% endblock %}

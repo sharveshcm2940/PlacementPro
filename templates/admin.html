@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel - PlacePrep{% endblock %}
+{% block breadcrumb %}Admin Panel{% endblock %}
+{% block extra_css %}
+<style>
+.admin-tabs { display:flex; gap:0; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:4px; margin-bottom:24px; width:fit-content; }
+.admin-tab { padding:9px 20px; border-radius:7px; font-size:13.5px; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all 0.18s; }
+.admin-tab.active { background:var(--surface2); color:var(--amber); }
+.admin-section { display:none; }
+.admin-section.active { display:block; }
+.admin-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+.user-actions { display:flex; gap:8px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header fade-up">
+  <div class="page-title">Admin <span>Panel</span></div>
+  <div class="page-subtitle">Manage users, questions, and platform settings.</div>
+</div>
+
+<div class="admin-tabs fade-up">
+  <div class="admin-tab active" onclick="switchAdminTab('overview',this)">Overview</div>
+  <div class="admin-tab" onclick="switchAdminTab('users',this)">Users</div>
+  <div class="admin-tab" onclick="switchAdminTab('questions',this)">Questions</div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="admin-section active" id="admin-overview">
+  <div class="admin-stat-grid fade-up delay-1">
+    <div class="stat-card"><div class="stat-label">Total Students</div><div class="stat-value amber" id="a-users">0</div></div>
+    <div class="stat-card"><div class="stat-label">Tests Taken</div><div class="stat-value" id="a-tests">0</div></div>
+    <div class="stat-card"><div class="stat-label">Avg Platform Score</div><div class="stat-value blue" id="a-avg">0%</div></div>
+    <div class="stat-card"><div class="stat-label">Questions Available</div><div class="stat-value green">21</div></div>
+  </div>
+  <div class="card fade-up delay-2">
+    <div class="section-title" style="margin-bottom:16px;">Recent Test Activity</div>
+    <div class="table-wrap">
+      <table class="data-table"><thead><tr><th>Student</th><th>Company</th><th>Score</th><th>Date</th></tr></thead>
+      <tbody id="a-recent-tests"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- USERS -->
+<div class="admin-section" id="admin-users">
+  <div class="card fade-up">
+    <div class="section-header">
+      <div class="section-title">Registered Users</div>
+      <span class="badge badge-amber" id="user-count">0 users</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>College</th><th>Branch</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- QUESTIONS (Info only) -->
+<div class="admin-section" id="admin-questions">
+  <div class="card fade-up">
+    <div class="section-header">
+      <div class="section-title">Question Bank</div>
+      <button class="btn btn-primary btn-sm" onclick="showToast('Question editor coming in next release', 'success')">+ Add Question</button>
+    </div>
+    <div class="grid-3" style="gap:16px;margin-bottom:20px;">
+      <div class="card card-sm" style="background:var(--bg3)">
+        <div class="card-label">APTITUDE</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--amber)">8</div>
+        <div class="text-sm text-muted">questions</div>
+      </div>
+      <div class="card card-sm" style="background:var(--bg3)">
+        <div class="card-label">VERBAL</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--amber)">4</div>
+        <div class="text-sm text-muted">questions</div>
+      </div>
+      <div class="card card-sm" style="background:var(--bg3)">
+        <div class="card-label">CODING</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--amber)">6</div>
+        <div class="text-sm text-muted">questions</div>
+      </div>
+      <div class="card card-sm" style="background:var(--bg3)">
+        <div class="card-label">CORE SUBJECTS</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--amber)">3</div>
+        <div class="text-sm text-muted">questions</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Topic</th><th>Difficulty</th><th>Question Preview</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">aptitude</span></td><td><span class="badge badge-green">easy</span></td><td style="color:var(--text)">If A can do a work in 10 days...</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Edit coming soon')">Edit</button></td></tr>
+          <tr><td><span class="badge badge-amber">verbal</span></td><td><span class="badge badge-green">easy</span></td><td style="color:var(--text)">Choose the synonym of ABUNDANT...</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Edit coming soon')">Edit</button></td></tr>
+          <tr><td><span class="badge badge-green">coding</span></td><td><span class="badge badge-amber">medium</span></td><td style="color:var(--text)">What is the output of: print(type(5/2))...</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Edit coming soon')">Edit</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function switchAdminTab(tab, el) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('admin-' + tab).classList.add('active');
+  if (tab === 'users') loadUsers();
+  if (tab === 'overview') loadOverview();
+}
+
+async function loadOverview() {
+  const data = await fetch('/api/admin/stats').then(r=>r.json());
+  if (data.error) { showToast('Access denied', 'error'); return; }
+  document.getElementById('a-users').textContent = data.total_users;
+  document.getElementById('a-tests').textContent = data.total_tests;
+  document.getElementById('a-avg').textContent = data.avg_score + '%';
+  document.getElementById('a-recent-tests').innerHTML = data.recent_tests.map(t => `
+    <tr>
+      <td style="font-weight:600;color:var(--text)">${t.name || '—'}</td>
+      <td>${t.company}</td>
+      <td style="font-family:'DM Mono',monospace">${t.score}/${t.total} (${t.total?Math.round(t.score/t.total*100):0}%)</td>
+      <td style="font-size:12px;color:var(--text-dim)">${new Date(t.created_at).toLocaleDateString('en-IN')}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-dim)">No activity</td></tr>';
+}
+
+async function loadUsers() {
+  const data = await fetch('/api/admin/users').then(r=>r.json());
+  if (data.error) { showToast('Access denied','error'); return; }
+  document.getElementById('user-count').textContent = data.users.length + ' users';
+  document.getElementById('users-tbody').innerHTML = data.users.map(u => `
+    <tr>
+      <td style="font-weight:600;color:var(--text)">${u.name||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${u.email}</td>
+      <td><span class="badge ${u.role==='admin'?'badge-red':'badge-green'}">${u.role}</span></td>
+      <td>${u.college||'—'}</td>
+      <td>${u.branch||'—'}</td>
+      <td style="font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace">${new Date(u.created_at).toLocaleDateString('en-IN')}</td>
+      <td>
+        ${u.role !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Delete</button>` : '—'}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">No users found</td></tr>';
+}
+
+async function deleteUser(id) {
+  if (!confirm('Delete this user? This cannot be undone.')) return;
+  const res = await fetch(`/api/admin/delete-user/${id}`, { method:'DELETE' });
+  const data = await res.json();
+  if (data.success) { showToast('User deleted', 'success'); loadUsers(); }
+  else showToast('Failed to delete', 'error');
+}
+
+loadOverview();
+</script>
+{% endblock %}
