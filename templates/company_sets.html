@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Company Sets - PlacePrep{% endblock %}
+{% block breadcrumb %}Company Sets{% endblock %}
+{% block extra_css %}
+<style>
+.company-sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.company-set-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.company-set-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--amber);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.company-set-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+.company-set-card:hover::before { opacity: 1; }
+
+.company-logo {
+  width: 48px; height: 48px;
+  background: var(--surface);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--amber);
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.company-set-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.company-set-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
+
+.company-set-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+
+.company-set-footer { display: flex; align-items: center; justify-content: space-between; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header fade-up">
+  <div class="page-title">Company <span>Practice Sets</span></div>
+  <div class="page-subtitle">Curated mock tests based on real company placement patterns.</div>
+</div>
+<div class="company-sets-grid" id="company-grid"></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const COMPANY_INFO = {
+  TCS: { desc: 'TCS focuses on aptitude, verbal and basic coding. Tests are moderate volume with easy to medium difficulty.', color: '#0073C6' },
+  Infosys: { desc: 'Infosys rounds include reasoning, verbal ability, and pseudocode-based questions.', color: '#007CC3' },
+  Wipro: { desc: 'Wipro tests aptitude and verbal heavily. Coding round has 2 problems to solve.', color: '#9B0032' },
+  Accenture: { desc: 'Accenture focuses on cognitive ability, technical communication and coding.', color: '#A100FF' },
+  Cognizant: { desc: 'CTS tests aptitude, verbal and logical reasoning. Coding involves basic DSA.', color: '#0033A0' },
+  Amazon: { desc: 'Amazon tests heavy on Data Structures, Algorithms and System Design basics.', color: '#FF9900' },
+  Microsoft: { desc: 'Microsoft focuses on coding, OOP concepts, and problem solving skills.', color: '#00A4EF' },
+  Google: { desc: 'Google emphasizes algorithms, coding excellence, and complexity analysis.', color: '#4285F4' }
+};
+
+async function loadCompanySets() {
+  const data = await fetch('/api/company-sets').then(r => r.json());
+  document.getElementById('company-grid').innerHTML = data.sets.map(s => {
+    const info = COMPANY_INFO[s.company] || {};
+    return `
+      <div class="company-set-card fade-up" onclick="startCompanyTest('${s.company}','${s.difficulty}')">
+        <div class="company-logo">${s.company.substring(0,2)}</div>
+        <div class="company-set-name">${s.company}</div>
+        <div class="company-set-desc">${info.desc || 'Practice test set for ' + s.company + ' placement.'}</div>
+        <div class="company-set-tags">
+          ${s.sections.map(sec => `<span class="tag" style="text-transform:capitalize">${sec}</span>`).join('')}
+        </div>
+        <div class="company-set-footer">
+          <span class="badge badge-${s.difficulty==='easy'?'green':s.difficulty==='medium'?'amber':'red'}">${s.difficulty}</span>
+          <button class="btn btn-primary btn-sm">Start Practice</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function startCompanyTest(company, difficulty) {
+  window.location.href = `/mock-test?company=${company}&difficulty=${difficulty}`;
+}
+
+loadCompanySets();
+</script>
+{% endblock %}

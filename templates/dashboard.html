@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - PlacePrep{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.welcome-banner {
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--surface) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, var(--amber-glow) 0%, transparent 70%);
+}
+.welcome-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.welcome-title span { color: var(--amber); }
+.welcome-sub { font-size: 14px; color: var(--text-muted); }
+
+.quick-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.quick-btn-primary {
+  background: var(--amber);
+  color: var(--bg);
+}
+.quick-btn-primary:hover { filter: brightness(1.08); }
+.quick-btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.quick-btn-secondary:hover { background: var(--surface2); }
+
+/* Recent Tests */
+.test-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.test-row:last-child { border-bottom: none; }
+.test-company { font-weight: 600; font-size: 14px; }
+.test-date { font-size: 12px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
+
+/* Score ring */
+.score-ring {
+  position: relative;
+  width: 48px; height: 48px;
+}
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Section analysis */
+.section-bar {
+  margin-bottom: 14px;
+}
+.section-bar-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.section-bar-name { font-weight: 600; text-transform: capitalize; }
+.section-bar-score { font-family: 'DM Mono', monospace; color: var(--text-muted); font-size: 12px; }
+
+/* Strength Weakness */
+.sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.sw-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.sw-card-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.sw-card-title.green { color: var(--green); }
+.sw-card-title.red { color: var(--red); }
+.sw-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 3px;
+}
+.sw-tag.green { background: rgba(46,194,126,0.12); color: var(--green); }
+.sw-tag.red { background: rgba(232,69,69,0.12); color: var(--red); }
+
+.company-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: var(--text-muted);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 1100px) { .dashboard-grid { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { 
+  .sw-grid { grid-template-columns: 1fr; }
+  .welcome-banner { flex-direction: column; gap: 20px; align-items: flex-start; }
+  .test-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="fade-up">
+  <!-- WELCOME BANNER -->
+  <div class="welcome-banner">
+    <div>
+      <div class="welcome-title">Hello, <span id="user-name">Student</span></div>
+      <div class="welcome-sub">Ready to practice today? Your last session score is waiting below.</div>
+    </div>
+    <div class="quick-actions">
+      <a href="/mock-test" class="quick-btn quick-btn-primary">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+        Start Mock Test
+      </a>
+      <a href="/coding" class="quick-btn quick-btn-secondary">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Coding Lab
+      </a>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row fade-up delay-1">
+    <div class="stat-card">
+      <div class="stat-label">Tests Taken</div>
+      <div class="stat-value amber" id="stat-tests">0</div>
+      <div class="stat-change">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Score</div>
+      <div class="stat-value" id="stat-avg">0%</div>
+      <div class="stat-change">Across all tests</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best Score</div>
+      <div class="stat-value green" id="stat-best">0%</div>
+      <div class="stat-change">Personal record</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Streak</div>
+      <div class="stat-value blue" id="stat-streak">0</div>
+      <div class="stat-change">Days in a row</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="dashboard-grid fade-up delay-2">
+
+    <!-- LEFT: Recent Tests -->
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-header">
+          <div class="section-title">Recent Tests</div>
+          <a href="/performance" class="btn btn-ghost btn-sm">View All</a>
+        </div>
+        <div id="recent-tests-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+            </div>
+            <h3>No tests yet</h3>
+            <p>Take your first mock test to see results here.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strength & Weakness -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:16px;">Strength & Weakness Analysis</div>
+        <div class="sw-grid" id="sw-grid">
+          <div class="sw-card">
+            <div class="sw-card-title green">Strengths</div>
+            <div id="strength-list"><span style="font-size:13px;color:var(--text-dim)">Take tests to see analysis</span></div>
+          </div>
+          <div class="sw-card">
+            <div class="sw-card-title red">Weaknesses</div>
+            <div id="weakness-list"><span style="font-size:13px;color:var(--text-dim)">Take tests to see analysis</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <!-- Section Performance -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-title" style="margin-bottom:16px;">Section Performance</div>
+        <div id="section-bars">
+          <div style="font-size:13px;color:var(--text-dim);text-align:center;padding:20px 0;">No data yet</div>
+        </div>
+      </div>
+
+      <!-- Top Companies Practiced -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:14px;">Companies Practiced</div>
+        <div id="companies-list" style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="font-size:13px;color:var(--text-dim)">None yet</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function loadDashboard() {
+  const me = await fetch('/api/me').then(r=>r.json());
+  if (me.error) { window.location.href='/'; return; }
+  document.getElementById('user-name').textContent = me.name || 'Student';
+
+  const data = await fetch('/api/dashboard').then(r=>r.json());
+  if (data.error) return;
+
+  const { tests, topic_stats, strengths, weaknesses } = data;
+
+  // Stats
+  document.getElementById('stat-tests').textContent = tests.length;
+  if (tests.length > 0) {
+    const avg = tests.reduce((s,t) => s + t.percentage, 0) / tests.length;
+    const best = Math.max(...tests.map(t => t.percentage));
+    document.getElementById('stat-avg').textContent = avg.toFixed(1) + '%';
+    document.getElementById('stat-best').textContent = best.toFixed(1) + '%';
+  }
+
+  // Recent tests
+  if (tests.length > 0) {
+    const html = tests.slice(0,5).map(t => {
+      const pct = t.percentage;
+      const color = pct >= 70 ? '#2ec27e' : pct >= 50 ? '#e8a020' : '#e84545';
+      const stroke = (pct / 100) * 113;
+      return `
+        <div class="test-row">
+          <div>
+            <div class="test-company">${t.company}</div>
+            <div class="test-date">${new Date(t.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+          </div>
+          <span class="badge ${pct>=70?'badge-green':pct>=50?'badge-amber':'badge-red'}">${t.difficulty}</span>
+          <div class="score-ring">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="18" fill="none" stroke="var(--surface)" stroke-width="4"/>
+              <circle cx="24" cy="24" r="18" fill="none" stroke="${color}" stroke-width="4"
+                stroke-dasharray="${stroke} ${113-stroke}" stroke-linecap="round"/>
+            </svg>
+            <div class="score-ring-text" style="color:${color}">${Math.round(pct)}%</div>
+          </div>
+          <div style="font-size:13px;font-family:'DM Mono',monospace;color:var(--text-muted)">${t.score}/${t.total}</div>
+        </div>`;
+    }).join('');
+    document.getElementById('recent-tests-list').innerHTML = html;
+  }
+
+  // Section performance
+  const topics = Object.keys(topic_stats);
+  if (topics.length > 0) {
+    document.getElementById('section-bars').innerHTML = topics.map(topic => {
+      const s = topic_stats[topic];
+      const pct = s.total ? Math.round(s.correct/s.total*100) : 0;
+      const colorClass = pct >= 70 ? 'green' : pct >= 50 ? '' : 'red';
+      return `
+        <div class="section-bar">
+          <div class="section-bar-header">
+            <span class="section-bar-name">${topic}</span>
+            <span class="section-bar-score">${s.correct}/${s.total} · ${pct}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill ${colorClass}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Strengths
+  if (strengths.length > 0) {
+    document.getElementById('strength-list').innerHTML = strengths.map(s => `<span class="sw-tag green">${s}</span>`).join('');
+  }
+  if (weaknesses.length > 0) {
+    document.getElementById('weakness-list').innerHTML = weaknesses.map(w => `<span class="sw-tag red">${w}</span>`).join('');
+  }
+
+  // Companies
+  const companies = [...new Set(tests.map(t => t.company))];
+  if (companies.length > 0) {
+    document.getElementById('companies-list').innerHTML = companies.map(c =>
+      `<span class="company-chip">${c}</span>`).join('');
+  }
+}
+
+loadDashboard();
+</script>
+{% endblock %}
